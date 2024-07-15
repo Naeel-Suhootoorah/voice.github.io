@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recycle Bin</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #232526;
+      color: #ccc;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    h1 {
+      margin: 20px 0;
+      color: white;
+      text-align: center;
+      font-size: 2.5em;
+      letter-spacing: 1.5px;
+    }
+
+    ul {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+      width: 90%;
+      max-width: 800px;
+    }
+
+    li {
+      background-color: #2a2a2a;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      transition: background-color 0.3s, transform 0.3s, box-shadow 0.3s;
+      display: flex;
+      flex-direction: column;
+    }
+
+    li:hover {
+      background-color: #3a3a3a;
+      transform: scale(1.02);
+      box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .note-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .note-title {
+      font-size: 1.2em;
+      color: #fff;
+    }
+
+    .note-timestamp {
+      font-size: 0.8em;
+      color: #aaa;
+    }
+
+    .btn-group {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .btn-group button {
+      margin-left: 10px;
+      background: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      padding: 10px 15px;
+      transition: background 0.3s, transform 0.3s;
+      display: flex;
+      align-items: center;
+    }
+
+    .btn-group button .icon {
+      margin-right: 5px;
+      font-size: 1.2em;
+    }
+
+    .btn-group button:hover {
+      background: #45a049;
+      transform: scale(1.05);
+    }
+
+    .btn-group button.delete {
+      background: #f44336;
+    }
+
+    .btn-group button.delete:hover {
+      background: #e53935;
+    }
+
+    #backBtn {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #4CAF50;
+      color: white;
+      margin: 20px;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    #backBtn:hover {
+      background-color: #45a049;
+      transform: scale(1.05);
+    }
+
+    @media (max-width: 600px) {
+      ul {
+        width: 95%;
+      }
+
+      li {
+        padding: 15px;
+      }
+
+      .btn-group button {
+        padding: 5px 10px;
+        font-size: 14px;
+      }
+
+      #backBtn {
+        font-size: 14px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Recycle Bin</h1>
+  <a id="backBtn" href="voice-notes.html">Back</a>
+  <ul id="recycledNotes"></ul>
+
+  <script>
+    function displayRecycledNotes() {
+      const recycledNotesList = document.getElementById('recycledNotes');
+      recycledNotesList.innerHTML = '';
+
+      const deletedNotes = Object.keys(localStorage)
+                                .filter(key => key.startsWith('deleted_'))
+                                .map(key => [key, localStorage.getItem(key)]);
+
+      deletedNotes.forEach(([key, value]) => {
+        const timestamp = new Date(key.replace('deleted_', ''));
+        const dateStr = timestamp.toLocaleDateString();
+        const timeStr = timestamp.toLocaleTimeString();
+
+        const listItem = document.createElement('li');
+        
+        const noteContent = document.createElement('div');
+        noteContent.classList.add('note-content');
+
+        const noteTitle = document.createElement('span');
+        noteTitle.classList.add('note-title');
+        noteTitle.textContent = value;
+
+        const noteTimestamp = document.createElement('span');
+        noteTimestamp.classList.add('note-timestamp');
+        noteTimestamp.textContent = `${dateStr} ${timeStr}`;
+
+        noteContent.appendChild(noteTitle);
+        noteContent.appendChild(noteTimestamp);
+
+        const btnGroup = document.createElement('div');
+        btnGroup.classList.add('btn-group');
+
+        const recoverBtn = document.createElement('button');
+        recoverBtn.classList.add('recover');
+        recoverBtn.innerHTML = '<span class="icon"></span>Recover';
+        recoverBtn.onclick = () => recoverNoteAndDisplay(key);
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.classList.add('delete');
+        deleteBtn.innerHTML = '<span class="icon"></span>Delete Permanently';
+        deleteBtn.onclick = () => deleteNotePermanentlyAndDisplay(key);
+
+        btnGroup.appendChild(recoverBtn);
+        btnGroup.appendChild(deleteBtn);
+
+        listItem.appendChild(noteContent);
+        listItem.appendChild(btnGroup);
+        recycledNotesList.appendChild(listItem);
+      });
+    }
+
+    function recoverNoteAndDisplay(key) {
+      const value = localStorage.getItem(key);
+      localStorage.removeItem(key);
+      localStorage.setItem(key.replace('deleted_', ''), value);
+      displayRecycledNotes();
+    }
+
+    function deleteNotePermanentlyAndDisplay(key) {
+      localStorage.removeItem(key);
+      displayRecycledNotes();
+    }
+
+    displayRecycledNotes();
+  </script>
+</body>
+</html>
