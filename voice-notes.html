@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Note Taking System</title>
+  <style>
+    body {
+      font-family: 'Helvetica Neue', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: var(--background-gradient);
+      color: var(--text-color);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    :root {
+      --background-gradient: linear-gradient(to right, #232526, #414345);
+      --text-color: #ccc;
+      --container-bg: #1c1c1c;
+      --button-bg: #4CAF50;
+      --button-bg-hover: #45a049;
+      --note-bg: #2a2a2a;
+      --note-hover-bg: #3a3a3a;
+      --recycle-bin-bg: #ff6347;
+    }
+
+    .light-mode {
+      --background-gradient: linear-gradient(to right, #fff, #ddd);
+      --text-color: #333;
+      --container-bg: #f9f9f9;
+      --button-bg: #007BFF;
+      --button-bg-hover: #0056b3;
+      --note-bg: #eee;
+      --note-hover-bg: #ddd;
+      --recycle-bin-bg: #dc3545;
+    }
+
+    .header {
+      text-align: center;
+      padding: 20px;
+      color: var(--text-color);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background: var(--container-bg);
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .controls {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .controls button {
+      flex: 1;
+      margin: 5px;
+      padding: 15px;
+      font-size: 14px;
+    }
+
+    .search-bar {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  background-color: #fff; /* Background color for the search bar */
+  border-radius: 5px; /* Rounded corners */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Subtle box shadow */
+  padding: 5px 10px; /* Padding around the input and button */
+}
+
+#searchInput {
+  flex: 1; /* Input takes up remaining space */
+  padding: 10px; /* Padding inside the input */
+  border: none; /* Remove default border */
+  outline: none; /* Remove outline on focus */
+  font-size: 16px; /* Font size of the text */
+}
+
+#searchBtn {
+  padding: 10px; /* Padding around the button */
+  background-color: #007BFF; /* Background color of the button */
+  color: white; /* Text color of the button */
+  border: none; /* Remove default border */
+  border-radius: 5px; /* Rounded corners */
+  cursor: pointer; /* Pointer cursor on hover */
+  transition: background-color 0.3s, transform 0.3s; /* Smooth transition */
+}
+
+#searchBtn:hover {
+  background-color: #0056b3; /* Darker background color on hover */
+  transform: scale(1.05); /* Slightly scale up on hover */
+}
+
+/* SVG icon inside the button */
+#searchBtn svg {
+  width: 1em; /* Adjust size of the icon */
+  height: 1em; /* Adjust size of the icon */
+  vertical-align: middle; /* Align the icon vertically */
+  fill: currentColor; /* Inherit fill color from parent (white in this case) */
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .search-bar {
+    margin-bottom: 15px;
+  }
+
+  #searchInput {
+    font-size: 14px; /* Adjust font size for smaller screens */
+  }
+
+  #searchBtn {
+    padding: 8px; /* Adjust padding for smaller screens */
+  }
+}
+
+
+    .sort-bar {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+
+    .sort-bar select {
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+      cursor: pointer;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background: var(--button-bg);
+      color: white;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    button:disabled {
+      background: #555;
+      cursor: not-allowed;
+    }
+
+    button:hover:not(:disabled) {
+      background: var(--button-bg-hover);
+      transform: scale(1.05);
+    }
+
+    .dropdown {
+      position: relative;
+      display: inline-block;
+    }
+
+    .dropdown-content {
+      display: none;
+      position: absolute;
+      background-color: var(--container-bg);
+      min-width: 160px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+      z-index: 1;
+      border-radius: 5px;
+    }
+
+    .dropdown-content a {
+      color: var(--text-color);
+      padding: 12px 16px;
+      text-decoration: none;
+      display: block;
+      transition: background 0.3s;
+    }
+
+    .dropdown-content a:hover {
+      background-color: var(--note-hover-bg);
+    }
+
+    .dropdown:hover .dropdown-content {
+      display: block;
+    }
+
+    .notes-list {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .notes-list li {
+      display: flex;
+      flex-direction: column;
+      background: var(--note-bg);
+      padding: 20px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+      transition: background 0.3s, transform 0.3s;
+    }
+
+    .notes-list li:hover {
+      background: var(--note-hover-bg);
+      transform: scale(1.02);
+    }
+
+    .btn-group {
+      display: flex;
+      margin-top: 10px;
+    }
+
+    .btn-group button {
+      margin-left: 5px;
+      background: var(--button-bg);
+    }
+
+    .recycle-bin {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      width: 50px;
+      height: 50px;
+      background: var(--recycle-bin-bg);
+      border-radius: 50%;
+      text-align: center;
+      line-height: 50px;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    .recycle-bin:hover {
+      transform: scale(1.1);
+    }
+
+    #darkModeToggle {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      width: 50px;
+      height: 50px;
+      background: #ff6347;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 50px;
+      font-size: 24px;
+      color: white;
+      cursor: pointer;
+      transition: transform 0.3s;
+    }
+
+    #darkModeToggle:hover {
+      transform: scale(1.1);
+    }
+
+    .recording {
+      border: 2px solid red;
+    }
+
+    #currentNote {
+      margin: 20px;
+      padding: 10px;
+      background: #333;
+      border-radius: 5px;
+      display: none;
+      color: white;
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        padding: 10px;
+      }
+
+      button {
+        font-size: 14px;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+
+      .notes-list li {
+        padding: 15px;
+      }
+    }
+
+    .sort-bar select {
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+  cursor: pointer;
+  background: var(--button-bg);
+  color: white;
+  transition: background 0.3s, transform 0.3s;
+  position: relative; /* Ensure the pseudo-element is positioned correctly */
+}
+
+.sort-bar select:hover {
+  background: var(--button-bg-hover);
+  transform: scale(1.05);
+}
+
+.sort-bar select::-ms-expand {
+  display: none; /* Remove default arrow for Internet Explorer */
+}
+
+.sort-bar select::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  width: 0;
+  height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 5px solid white;
+  transform: translateY(-50%);
+  pointer-events: none; /* Allow clicks to pass through the pseudo-element */
+}
+
+#wordCount {
+  padding: 10px;
+  font-size: 16px;
+  color: white;
+  background-color: #4CAF50;
+  border-radius: 5px;
+  margin: 10px 0;
+  text-align: center;
+  transition: background-color 0.3s, transform 0.3s;
+}
+
+#wordCount:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+}
+
+  </style>
+</head>
+<body>
+  <header class="header">
+    <h1>Voice Note Taking System</h1>
+  </header>
+  <main class="container">
+    <div class="controls">
+      <button id="startBtn">Start Recording</button>
+      <button id="stopBtn" disabled>Stop Recording</button>
+      <button id="deleteBtn">Delete All Notes</button>
+      <div class="dropdown">
+        <button id="exportBtn">Export Notes</button>
+        <div class="dropdown-content">
+          <a href="#" id="exportFile">Export to File</a>
+        </div>
+      </div>
+      <div>
+        <div id="wordCount" style="display: none;">Word Count: 0</div>
+      </div>
+    </div>
+    <div class="search-bar" style="background-color: #333;">
+      <input type="text" id="searchInput" placeholder="Search notes..." style="background-color: #333; color: white;">
+      <button id="searchBtn">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" height="24" viewBox="0 0 24 24" width="24" focusable="false" style="pointer-events: none; display: inherit; width: 100%; height: 100%;">
+          <path clip-rule="evenodd" d="M16.296 16.996a8 8 0 11.707-.708l3.909 3.91-.707.707-3.909-3.909ZM18 11a7 7 0 11-14 0 7 7 0 0114 0Z" fill-rule="evenodd"></path>
+        </svg>
+      </button>
+    </div>
+    <div class="sort-bar">
+      <select id="sortSelect">
+        <option value="newest">Sort by Newest</option>
+        <option value="oldest">Sort by Oldest</option>
+        <option value="category">Sort by Category</option>
+      </select>
+    </div>
+    <div id="currentNote"></div>
+    <ul id="notes" class="notes-list"></ul>
+  </main>
+  <div id="darkModeToggle" onclick="toggleDarkMode()">🌙</div>
+  <script>
+    if (!localStorage.getItem('visited')) {
+    // If not, clear all notes and set the visited flag
+    localStorage.clear();
+    localStorage.setItem('visited', 'true');
+  }
+
+    const recognition = new webkitSpeechRecognition();
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const deleteBtn = document.getElementById('deleteBtn');
+    const exportFile = document.getElementById('exportFile');
+    const notesList = document.getElementById('notes');
+    const searchInput = document.getElementById('searchInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const sortSelect = document.getElementById('sortSelect');
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const currentNote = document.getElementById('currentNote');
+
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    let note = '';
+    let darkMode = false;
+
+    startBtn.addEventListener('click', () => {
+      recognition.start();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      document.body.classList.add('recording');
+      currentNote.style.display = 'block';
+    });
+
+    stopBtn.addEventListener('click', () => {
+      recognition.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      document.body.classList.remove('recording');
+      currentNote.style.display = 'none';
+
+      if (note.trim() !== '') {
+        const timestamp = new Date().toISOString();
+        localStorage.setItem(timestamp, formatNoteText(note));
+        note = '';
+        displayNotes();
+      }
+    });
+
+    deleteBtn.addEventListener('click', () => {
+      localStorage.clear();
+      displayNotes();
+    });
+
+    searchBtn.addEventListener('click', () => {
+      displayNotes(searchInput.value);
+    });
+
+    sortSelect.addEventListener('change', () => {
+      displayNotes(searchInput.value);
+    });
+
+    exportFile.addEventListener('click', () => {
+      exportNotes();
+    });
+
+    recognition.onresult = (event) => {
+      const transcript = Array.from(event.results)
+                          .map(result => result[0].transcript)
+                          .join('');
+
+      note = transcript;
+      currentNote.textContent = note;
+    };
+
+    function displayNotes(searchText = '') {
+      notesList.innerHTML = '';
+      let timestamps = Object.keys(localStorage).filter(key => !key.startsWith('deleted_'));
+
+      if (sortSelect.value === 'newest') {
+        timestamps = timestamps.sort().reverse();
+      } else if (sortSelect.value === 'oldest') {
+        timestamps = timestamps.sort();
+      } else if (sortSelect.value === 'category') {
+        // Implement sorting by category
+      }
+
+      timestamps.forEach(key => {
+        const value = localStorage.getItem(key);
+        if (value.toLowerCase().includes(searchText.toLowerCase())) {
+          const timestamp = new Date(key);
+          const dateStr = timestamp.toLocaleDateString();
+          const timeStr = timestamp.toLocaleTimeString();
+          const listItem = document.createElement('li');
+          listItem.textContent = `${dateStr} ${timeStr}: ${value}`;
+
+          const btnGroup = document.createElement('div');
+          btnGroup.classList.add('btn-group');
+          const copyBtn = document.createElement('button');
+          copyBtn.textContent = 'Copy';
+          copyBtn.onclick = () => copyToClipboard(value);
+          const deleteNoteBtn = document.createElement('button');
+          deleteNoteBtn.textContent = 'Delete';
+          deleteNoteBtn.onclick = () => deleteNoteAndDisplay(key);
+          const restoreNoteBtn = document.createElement('button');
+          restoreNoteBtn.textContent = 'Restore';
+          restoreNoteBtn.onclick = () => restoreDeletedNoteAndDisplay(key);
+
+          btnGroup.appendChild(copyBtn);
+          btnGroup.appendChild(deleteNoteBtn);
+          if (key.startsWith('deleted_')) {
+            btnGroup.appendChild(restoreNoteBtn);
+          }
+
+          listItem.appendChild(btnGroup);
+          notesList.appendChild(listItem);
+        }
+      });
+    }
+
+    function formatNoteText(text) {
+      const capitalizedText = text.charAt(0).toUpperCase() + text.slice(1);
+      const lastChar = capitalizedText.slice(-1);
+      if (lastChar !== '.' && lastChar !== '!' && lastChar !== '?') {
+        return capitalizedText + '.';
+      }
+      return capitalizedText;
+    }
+
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+      alert('Note copied to clipboard!');
+    }
+
+    function exportNotes() {
+      let notes = '';
+      let timestamps = Object.keys(localStorage).filter(key => !key.startsWith('deleted_'));
+
+      timestamps.forEach(key => {
+        const value = localStorage.getItem(key);
+        const timestamp = new Date(key);
+        const dateStr = timestamp.toLocaleDateString();
+        const timeStr = timestamp.toLocaleTimeString();
+        notes += `${dateStr} ${timeStr}: ${value}\n\n`;
+      });
+
+      const blob = new Blob([notes], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'notes.txt';
+      a.click();
+    }
+
+    function toggleDarkMode() {
+      darkMode = !darkMode;
+      if (darkMode) {
+        document.body.classList.add('light-mode');
+      } else {
+        document.body.classList.remove('light-mode');
+      }
+    }
+
+    displayNotes();
+
+
+recognition.onresult = (event) => {
+  let transcript = Array.from(event.results)
+                        .map(result => result[0].transcript)
+                        .join(' ');
+
+  // Convert "number (any number)" to "any number."
+  transcript = transcript.replace(/number (\d+)/g, '$1.');
+
+  // Convert "next line" to newline character
+  transcript = transcript.replace(/next line/gi, '\n');
+
+  note = transcript;
+  currentNote.textContent = note;
+
+  // Display word count
+  const wordCount = note.split(/\s+/).filter(word => word.length > 0).length;
+  document.getElementById('wordCount').textContent = `Word Count: ${wordCount}`;
+};
+
+function deleteNoteAndDisplay(key) {
+  localStorage.removeItem(key);
+  displayNotes();
+}
+
+recognition.onresult = (event) => {
+  let transcript = Array.from(event.results)
+                        .map(result => result[0].transcript)
+                        .join(' ');
+
+  // Convert "number (any number)" to "any number."
+  transcript = transcript.replace(/number (\d+)/g, '$1.');
+
+  // Convert "next line" to newline character
+  transcript = transcript.replace(/next line/gi, '\n');
+
+  // Convert spoken punctuation to actual punctuation marks
+  transcript = transcript.replace(/\b(full stop|period)\b/gi, '.');
+  transcript = transcript.replace(/\b(comma)\b/gi, ',');
+  transcript = transcript.replace(/\b(question mark)\b/gi, '?');
+  transcript = transcript.replace(/\b(exclamation mark|exclamation point)\b/gi, '!');
+  transcript = transcript.replace(/\b(colon)\b/gi, ':');
+  transcript = transcript.replace(/\b(semicolon)\b/gi, ';');
+  transcript = transcript.replace(/\b(open parenthesis)\b/gi, '(');
+  transcript = transcript.replace(/\b(close parenthesis)\b/gi, ')');
+  transcript = transcript.replace(/\b(open quote)\b/gi, '"');
+  transcript = transcript.replace(/\b(close quote)\b/gi, '"');
+  transcript = transcript.replace(/\b(dash|hyphen)\b/gi, '-');
+  transcript = transcript.replace(/\b(ellipsis|dot dot dot)\b/gi, '...');
+
+  // Remove extra spaces before punctuation
+  transcript = transcript.replace(/\s+([.,?!:;()"'-])/g, '$1');
+
+  note = transcript;
+  currentNote.textContent = note;
+
+  // Display word count
+  const wordCount = note.split(/\s+/).filter(word => word.length > 0).length;
+  document.getElementById('wordCount').textContent = `Word Count: ${wordCount}`;
+};
+
+// Check if the user has visited before
+if (!localStorage.getItem('visited')) {
+  // If not, clear all notes and set the visited flag
+  localStorage.clear();
+  localStorage.setItem('visited', 'true');
+}
+
+  </script>
+</body>
+</html>
